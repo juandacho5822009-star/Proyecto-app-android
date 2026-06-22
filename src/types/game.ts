@@ -1,7 +1,9 @@
 export interface Resources {
+  gold: number;
   wood: number;
   food: number;
   scrap: number;
+  gems: number;
 }
 
 export interface BarricadeUpgrade {
@@ -32,12 +34,15 @@ export interface Upgrades {
   workshop: ProducerUpgrade;
 }
 
-export interface Tile {
-  row: number;
-  col: number;
-  owned: boolean;
-  zombieCount: number;
-  bonusPerSec: Resources;
+export type ZombieType = 'basic' | 'soldier' | 'construction' | 'chef' | 'boss';
+
+export interface ZombieUnit {
+  id: string;
+  type: ZombieType;
+  hp: number;
+  maxHp: number;
+  side: 'left' | 'right';
+  lane: number; // 0-4, vertical lane on screen
 }
 
 export interface Wave {
@@ -48,6 +53,7 @@ export interface Wave {
   zombieHp: number;
   zombieAttack: number;
   nextWaveCountdown: number;
+  activeUnits: ZombieUnit[];
 }
 
 export interface Cabin {
@@ -61,30 +67,39 @@ export interface Stats {
   wavesSurvived: number;
 }
 
+export type WorldZone = 'forest' | 'city' | 'desert' | 'military' | 'lab';
+
+export interface ZoneProgress {
+  zone: WorldZone;
+  name: string;
+  icon: string;
+  level: number;
+  maxLevel: number;
+  unlocked: boolean;
+}
+
 export interface GameState {
   resources: Resources;
   cabin: Cabin;
   upgrades: Upgrades;
-  territory: Tile[][];
+  world: ZoneProgress[];
   wave: Wave;
   stats: Stats;
   gameOver: boolean;
   lastTick: number;
-  clickFeedback: { active: boolean; x: number; y: number; value: string };
 }
 
-export type RewardType = 'resources' | 'heal' | 'wave_skip' | 'repair_barricade';
+export type RewardType = 'resources' | 'heal' | 'wave_skip' | 'repair_barricade' | 'gold_boost';
 
 export type GameAction =
-  | { type: 'CLICK_CABIN'; payload: { x: number; y: number } }
+  | { type: 'CLICK_CABIN' }
   | { type: 'UPGRADE_BARRICADE' }
   | { type: 'UPGRADE_TRAPS' }
   | { type: 'UPGRADE_WATCHTOWER' }
   | { type: 'UPGRADE_SAWMILL' }
   | { type: 'UPGRADE_FARM' }
   | { type: 'UPGRADE_WORKSHOP' }
-  | { type: 'ATTACK_TILE'; payload: { row: number; col: number } }
   | { type: 'TICK'; payload: { delta: number } }
   | { type: 'GRANT_REWARD'; payload: { reward: RewardType } }
-  | { type: 'RESET_GAME' }
-  | { type: 'CLEAR_CLICK_FEEDBACK' };
+  | { type: 'BUY_UPGRADE_HAMMER' }
+  | { type: 'RESET_GAME' };

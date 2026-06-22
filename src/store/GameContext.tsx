@@ -15,33 +15,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const saved = loadGame();
   const [state, dispatch] = useReducer(gameReducer, saved ?? buildInitialState());
 
-  // Game loop — fires every TICK_MS, accumulates real delta time
   const lastTickRef = useRef<number>(Date.now());
   const accRef = useRef<number>(0);
 
   useEffect(() => {
     let animId: number;
-
-    const loop = (timestamp: number) => {
+    const loop = () => {
       const now = Date.now();
-      const diff = now - lastTickRef.current;
-      accRef.current += diff;
+      accRef.current += now - lastTickRef.current;
       lastTickRef.current = now;
-
       if (accRef.current >= TICK_MS) {
         const ticks = Math.floor(accRef.current / TICK_MS);
         accRef.current -= ticks * TICK_MS;
         dispatch({ type: 'TICK', payload: { delta: ticks } });
       }
-
       animId = requestAnimationFrame(loop);
     };
-
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
   }, []);
 
-  // Autosave every 5 seconds
   useEffect(() => {
     const id = setInterval(() => saveGame(state), 5000);
     return () => clearInterval(id);

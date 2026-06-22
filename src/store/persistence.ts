@@ -1,12 +1,12 @@
 import type { GameState } from '../types/game';
 
-const SAVE_KEY = 'zcc_save_v1';
+const SAVE_KEY = 'zcc_save_v2';
 
 export function saveGame(state: GameState): void {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
   } catch {
-    // Storage full or unavailable — silently skip
+    // Storage full or unavailable
   }
 }
 
