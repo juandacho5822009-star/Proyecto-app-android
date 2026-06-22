@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Zombie Cabaña Conquest</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        width: 100%; height: 100%;
+        background: #000;
+        overflow: hidden;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+        font-family: 'Segoe UI', Arial, sans-serif;
+      }
+      #game-container {
+        width: 100%; height: 100%;
+        display: flex; align-items: center; justify-content: center;
+      }
+      canvas { display: block; }
+
+      /* ── UI Overlay (DOM panels sobre el canvas) ── */
+      .ui-panel {
+        position: fixed;
+        left: 50%; transform: translateX(-50%);
+        width: 390px; max-width: 100vw;
+        background: #111827;
+        border-top: 2px solid #78350f;
+        border-radius: 24px 24px 0 0;
+        padding: 12px 16px 24px;
+        max-height: 82vh;
+        overflow-y: auto;
+        z-index: 100;
+        bottom: 0;
+        display: none;
+        animation: slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1);
+        -webkit-overflow-scrolling: touch;
+      }
+      .ui-panel.open { display: block; }
+
+      @keyframes slideUp {
+        from { transform: translateX(-50%) translateY(100%); opacity: 0; }
+        to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+      }
+
+      .panel-handle {
+        width: 40px; height: 4px;
+        background: #374151; border-radius: 2px;
+        margin: 0 auto 12px;
+      }
+      .panel-title {
+        color: #fbbf24; font-size: 18px; font-weight: 800;
+        text-align: center; margin-bottom: 4px;
+        text-transform: uppercase; letter-spacing: 2px;
+        text-shadow: 0 2px 8px rgba(251,191,36,0.4);
+      }
+      .panel-subtitle { color: #6b7280; font-size: 11px; text-align: center; margin-bottom: 14px; }
+
+      /* Upgrade grid */
+      .upgrade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .upgrade-card {
+        background: #1f2937; border: 1px solid #374151;
+        border-radius: 12px; padding: 10px 8px;
+        cursor: pointer; transition: all 0.15s;
+        text-align: left;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .upgrade-card:active { transform: scale(0.96); }
+      .upgrade-card.can-afford { border-color: #92400e; background: #1c1a0e; }
+      .upgrade-card.can-afford:active { background: #2d2a10; }
+      .upgrade-card-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+      .upgrade-icon { font-size: 22px; }
+      .upgrade-name { color: #f9fafb; font-size: 12px; font-weight: 700; }
+      .upgrade-level { color: #fbbf24; font-size: 10px; margin-left: auto; }
+      .upgrade-desc { color: #34d399; font-size: 10px; margin-bottom: 6px; }
+      .upgrade-stat { color: #6b7280; font-size: 9px; margin-bottom: 6px; }
+      .cost-chips { display: flex; flex-wrap: wrap; gap: 3px; }
+      .cost-chip { background: #374151; color: #9ca3af; font-size: 9px; border-radius: 4px; padding: 2px 4px; }
+
+      /* Shop */
+      .shop-item {
+        display: flex; align-items: center; gap: 12px;
+        background: #1f2937; border: 1px solid #374151;
+        border-radius: 14px; padding: 12px;
+        margin-bottom: 10px; position: relative;
+      }
+      .shop-icon-box {
+        width: 52px; height: 52px; background: #374151;
+        border-radius: 12px; display: flex; align-items: center;
+        justify-content: center; font-size: 28px; flex-shrink: 0;
+        position: relative;
+      }
+      .shop-badge {
+        position: absolute; top: -4px; right: -4px;
+        font-size: 8px; font-weight: 800; color: #fff;
+        padding: 1px 4px; border-radius: 4px;
+        text-transform: uppercase;
+      }
+      .shop-info { flex: 1; }
+      .shop-name { color: #f9fafb; font-size: 13px; font-weight: 700; }
+      .shop-sub  { color: #6b7280; font-size: 10px; }
+      .shop-gain { color: #34d399; font-size: 11px; margin-top: 2px; }
+      .shop-btn {
+        background: #d97706; color: #fff; font-weight: 800;
+        border: none; border-radius: 10px; padding: 8px 12px;
+        font-size: 11px; cursor: pointer; flex-shrink: 0;
+        transition: all 0.15s; min-width: 60px; text-align: center;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .shop-btn:active { transform: scale(0.94); }
+      .shop-btn.ad-btn { background: #1d4ed8; }
+      .shop-btn:disabled { opacity: 0.4; pointer-events: none; }
+
+      /* World Map */
+      .zone-row {
+        display: flex; align-items: center; gap: 10px;
+        background: #1f2937; border: 1px solid #374151;
+        border-radius: 12px; padding: 10px 12px;
+        margin-bottom: 8px;
+      }
+      .zone-row.current { border-color: #15803d; background: #052e16; }
+      .zone-row.locked  { opacity: 0.45; }
+      .zone-icon { font-size: 28px; }
+      .zone-info { flex: 1; }
+      .zone-name { color: #f9fafb; font-size: 12px; font-weight: 700; }
+      .zone-here { color: #fbbf24; font-size: 10px; margin-left: 6px; }
+      .zone-prog-bar {
+        height: 5px; background: #374151; border-radius: 3px;
+        overflow: hidden; margin-top: 4px;
+      }
+      .zone-prog-fill { height: 100%; background: #16a34a; border-radius: 3px; }
+      .zone-lock { color: #6b7280; font-size: 10px; margin-top: 3px; }
+
+      /* Close / generic button */
+      .btn-close {
+        width: 100%; padding: 10px; background: #1f2937;
+        border: 1px solid #374151; border-radius: 12px;
+        color: #6b7280; font-size: 13px; cursor: pointer;
+        margin-top: 12px; transition: background 0.15s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .btn-close:active { background: #374151; }
+
+      /* Panel overlay backdrop */
+      #panel-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+        z-index: 99; display: none;
+      }
+      #panel-backdrop.open { display: block; }
+
+      /* Stats row */
+      .stats-row { display: flex; gap: 8px; margin-bottom: 14px; }
+      .stat-box {
+        flex: 1; background: #1f2937; border: 1px solid #374151;
+        border-radius: 10px; padding: 8px; text-align: center;
+      }
+      .stat-box .stat-val { color: #f9fafb; font-size: 15px; font-weight: 800; }
+      .stat-box .stat-lbl { color: #6b7280; font-size: 9px; }
+    </style>
+    <script type="module" crossorigin src="./assets/index-QvquJ9s4.js"></script>
+  </head>
+  <body>
+    <div id="game-container"></div>
+
+    <!-- Panel backdrop -->
+    <div id="panel-backdrop"></div>
+
+    <!-- Upgrade Panel -->
+    <div class="ui-panel" id="panel-upgrade">
+      <div class="panel-handle"></div>
+      <div class="panel-title">🔧 Menú de Mejoras</div>
+      <div class="panel-subtitle">Fortalece tu cabaña</div>
+      <div class="upgrade-grid" id="upgrade-grid"></div>
+      <button class="btn-close" onclick="window.closePanel()">Cerrar</button>
+    </div>
+
+    <!-- Shop Panel -->
+    <div class="ui-panel" id="panel-shop">
+      <div class="panel-handle"></div>
+      <div class="panel-title">🏪 Zombie Armory Shop</div>
+      <div class="panel-subtitle">Equípate para sobrevivir</div>
+      <div id="shop-items"></div>
+      <button class="btn-close" onclick="window.closePanel()">Cerrar</button>
+    </div>
+
+    <!-- World Map Panel -->
+    <div class="ui-panel" id="panel-map">
+      <div class="panel-handle"></div>
+      <div class="panel-title">🗺️ Mapa del Mundo</div>
+      <div id="world-progress-bar" style="margin-bottom:12px"></div>
+      <div id="zone-list"></div>
+      <div class="stats-row" id="stats-row"></div>
+      <button class="btn-close" onclick="window.closePanel()">Cerrar</button>
+    </div>
+
+  </body>
+</html>
