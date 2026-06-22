@@ -34,7 +34,7 @@ export class BootScene extends Phaser.Scene {
     });
 
     // ── Load assets ────────────────────────────────────────────────
-    this.load.spritesheet('zombie_walk', '/assets/sprites/zombie_walk.png', {
+    this.load.spritesheet('zombie_walk', 'assets/sprites/zombie_walk.png', {
       frameWidth:  GC.SPRITE_FRAME_W,
       frameHeight: GC.SPRITE_FRAME_H,
     });
