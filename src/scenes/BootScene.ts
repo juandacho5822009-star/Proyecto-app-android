@@ -38,9 +38,10 @@ export class BootScene extends Phaser.Scene {
       frameWidth:  GC.SPRITE_FRAME_W,
       frameHeight: GC.SPRITE_FRAME_H,
     });
-    // Add more assets here as they're available:
-    // this.load.image('cabin_bg', '/assets/sprites/cabin_bg.png');
-    // this.load.audio('zombie_groan', '/assets/audio/groan.mp3');
+    this.load.image('bg_sky',   'assets/sprites/bg_sky.png');
+    this.load.image('tree',     'assets/sprites/tree.png');
+    this.load.image('clearing', 'assets/sprites/clearing.png');
+    this.load.image('cabin',    'assets/sprites/cabin.png');
   }
 
   create(): void {
